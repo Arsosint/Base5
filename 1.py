@@ -1,67 +1,105 @@
 import telebot
-import sqlite3
+from telebot import types
+import time
 
-TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'  # Вставьте сюда ваш токен бота
-OWNER_ID = 6321157988  # ID владельца бота
-bot = telebot.TeleBot(TOKEN)
+API_TOKEN = 'YOUR_API_TOKEN'
+bot = telebot.TeleBot(API_TOKEN)
 
-conn = sqlite3.connect('users.db', check_same_thread=False)
-cursor = conn.cursor()
+user_roles = {}  # Хранит роли пользователей
+user_muted_until = {}  # Хранит время, до которого пользователь замучен
+user_banned_until = {}  # Хранит время, до которого пользователь забанен
 
-# Создание таблицы пользователей, если она еще не создана
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY,
-    username TEXT UNIQUE,
-    rank TEXT DEFAULT 'Нету в базе'
-)
-''')
-conn.commit()
+# Определение ролей
+roles = ['Стажёр', 'Владелец', 'Директор', 'Волонтёр', 'Админ', 'Гарант']
 
-def get_user_rank(user_id):
-    cursor.execute("SELECT rank FROM users WHERE id = ?", (user_id,))
-    result = cursor.fetchone()
-    if result:
-        return result[0]
-    return None
+def is_admin(user_id):
+    role = user_roles.get(user_id)
+    return role in ['Владелец', 'Директор', 'Админ', 'Гарант']
 
-def is_owner(user_id):
-    user_rank = get_user_rank(user_id)
-    return user_rank == 'владелец' or user_id == OWNER_ID
+def is_trust(user_id):
+    role = user_roles.get(user_id)
+    return role in ['Владелец', 'Директор', 'Гарант']
 
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
-    bot.reply_to(message, "Привет! Это бот для АнтиСкам Базы Stand Base")
-    bot.reply_to(message, f"Ваш user ID: {message.from_user.id}")
+@bot.message_handler(commands=['мут'])
+def mute_user(message):
+    if is_admin(message.from_user.id):
+        params = message.text.split()[1:]
+        if len(params) < 3:
+            bot.reply_to(message, "Необходимо указать юзера, причину и время.")
+            return
+        user_id, reason, duration = params[0], ' '.join(params[1:-1]), int(params[-1])
+        user_muted_until[user_id] = time.time() + duration * 60
+        bot.reply_to(message, f"Пользователь {user_id} замучен на {duration} минут по причине: {reason}")
+
+@bot.message_handler(commands=['бан'])
+def ban_user(message):
+    if is_admin(message.from_user.id):
+        params = message.text.split()[1:]
+        if len(params) < 3:
+            bot.reply_to(message, "Необходимо указать юзера, причину и время.")
+            return
+        user_id, reason, duration = params[0], ' '.join(params[1:-1]), int(params[-1])
+        user_banned_until[user_id] = time.time() + duration * 60
+        bot.reply_to(message, f"Пользователь {user_id} забанен на {duration} минут по причине: {reason}")
+
+@bot.message_handler(commands=['делмут'])
+def delete_mute(message):
+    if is_admin(message.from_user.id):
+        params = message.text.split()[1:]
+        if len(params) < 3:
+            bot.reply_to(message, "Необходимо указать юзера, причину и количество сообщений.")
+            return
+        user_id, reason, num_messages = params[0], ' '.join(params[1:-1]), int(params[-1])
+        user_muted_until[user_id] = time.time() + 5 * 60  # Пример, замученный на 5 минут
+        bot.reply_to(message, f"Пользователь {user_id} замучен на 5 минут и последние {num_messages} сообщений удалены.")
+
+@bot.message_handler(commands=['оффтоп'])
+def off_topic(message):
+    if is_trust(message.from_user.id):
+        params = message.text.split()[1:]
+        if len(params) < 1:
+            bot.reply_to(message, "Необходимо указать юзера.")
+            return
+        user_id = params[0]
+        user_muted_until[user_id] = time.time() + 5 * 60
+        bot.reply_to(message, f"Пользователь {user_id} в оффтоп на 5 минут.")
 
 @bot.message_handler(commands=['ранг'])
 def set_rank(message):
-    user_id = message.from_user.id
-    args = message.text.split()[1:]  # Получаем аргументы, исключая саму команду
-    
-    if not is_owner(user_id):
-        bot.reply_to(message, "Только владелец может использовать эту команду.")
-        return
+    if is_trust(message.from_user.id):
+        params = message.text.split()[1:]
+        if len(params) < 2:
+            bot.reply_to(message, "Необходимо указать ID пользователя и ранг.")
+            return
+        user_id, rank = params[0], params[1]
+        if rank in roles:
+            user_roles[user_id] = rank
+            bot.reply_to(message, f"Ранг для пользователя {user_id} установлен на {rank}.")
+        else:
+            bot.reply_to(message, "Некорректный ранг.")
 
-    if len(args) < 2:
-        bot.reply_to(message, "Необходимо указать username и ранг.")
-        return
+@bot.message_handler(commands=['снять_ранг'])
+def remove_rank(message):
+    if is_trust(message.from_user.id):
+        params = message.text.split()[1:]
+        if len(params) < 1:
+            bot.reply_to(message, "Необходимо указать ID пользователя.")
+            return
+        user_id = params[0]
+        user_roles.pop(user_id, None)
+        bot.reply_to(message, f"Ранг для пользователя {user_id} снят.")
 
-    tg_username, new_rank = args
+# Проверка на mute или ban перед обработкой других команд
+@bot.middleware_handler(update_types=['message'])
+def check_mute_ban(message):
+    if message.from_user.id in user_muted_until and time.time() < user_muted_until[message.from_user.id]:
+        bot.reply_to(message, "Вы замучены и не можете писать.")
+        return False
 
-    if new_rank not in ['волонтёр', 'админ', 'владелец', 'стажёр', 'гарант', 'директор']:
-        bot.reply_to(message, "Некорректный ранг. Доступные ранги: волонтёр, админ, владелец, стажёр, гарант, директор.")
-        return
+    if message.from_user.id in user_banned_until and time.time() < user_banned_until[message.from_user.id]:
+        bot.reply_to(message, "Вы забанены и не можете писать.")
+        return False
 
-    cursor.execute("INSERT OR IGNORE INTO users (username, rank) VALUES (?, 'Нету в базе')", (tg_username,))
-    cursor.execute("UPDATE users SET rank = ? WHERE username = ?", (new_rank, tg_username))
-    conn.commit()
+    return True
 
-    bot.reply_to(message, f"Пользователь {tg_username} повышен до {new_rank}.")
-
-@bot.message_handler(func=lambda message: True)
-def catch_all(message):
-    bot.reply_to(message, 'Ошибка: данной команды не существует.')
-
-if __name__ == '__main__':
-    bot.polling(non_stop=True)
+bot.polling(none_stop=True)
