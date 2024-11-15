@@ -43,17 +43,20 @@ def set_rank(message):
         bot.reply_to(message, "Только владелец бота может использовать эту команду.")
         return
 
-    args = message.text.split()[1:]
+    args = message.text.split()[1:]  # Получаем аргументы, исключая саму команду
     if len(args) < 2:
-        bot.reply_to(message, "Необходимо указать ID пользователя и новый ранг (Волонтер, Директор, Владелец, Стажер Гарант, Админ .")
+        bot.reply_to(message, "Необходимо указать ID пользователя и новый ранг (Волонтер, Директор, Владелец, Стажер Гарант, Админ).")
         return
 
-    user_id_to_change, new_rank = args[0], args[1]
+    user_id_to_change = args[0]
+    new_rank = ' '.join(args[1:])  # Объединяем все части ранга
+
     try:
         cursor.execute("UPDATE users SET rank = ? WHERE id = ?", (new_rank, int(user_id_to_change)))
         conn.commit()
         bot.reply_to(message, f"Ранг пользователя {user_id_to_change} обновлен на {new_rank}.")
-    except:
+    except Exception as e:
+        print(f"Error updating user rank: {e}")
         bot.reply_to(message, "Произошла ошибка при обновлении ранга пользователя.")
 
 @bot.message_handler(func=lambda message: True)
