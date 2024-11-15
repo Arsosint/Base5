@@ -29,7 +29,7 @@ def can_issue_rank(user_id):
 def can_remove_rank(user_id):
     cursor.execute("SELECT rank FROM users WHERE id = ?", (user_id,))
     rank = cursor.fetchone()
-    return rank and rank[0] in ['владелец']
+    return rank and rank[0] == 'владелец'
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
@@ -70,7 +70,7 @@ def remove_rank(message):
 
     args = message.text.split()[1:]
     if len(args) < 1:
-        bot.reply_to(message, "Необходимо указать юзер .")
+        bot.reply_to(message, "Необходимо указать юзер.")
         return
 
     tg_username = args[0]
@@ -89,7 +89,7 @@ def trust_user(message):
 
     args = message.text.split()[1:]
     if len(args) < 1:
-        bot.reply_to(message, "Необходимо указать юзер .")
+        bot.reply_to(message, "Необходимо указать юзер.")
         return
 
     tg_username = args[0]
@@ -102,7 +102,7 @@ def trust_user(message):
 
 @bot.message_handler(func=lambda message: True)
 def catch_all(message):
-    bot.reply_to(message, " Ошибка Данной Команды не существует")
+    bot.reply_to(message, "Ошибка: данной команды не существует.")
 
 if __name__ == '__main__':
     bot.polling(non_stop=True)
