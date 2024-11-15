@@ -1,6 +1,5 @@
 import telebot
 import sqlite3
-from datetime import datetime, timedelta
 
 TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'  # Вставьте сюда ваш токен бота
 OWNER_ID = 6321157988  # ID изначального владельца
@@ -45,7 +44,7 @@ def set_rank(message):
 
     args = message.text.split()[1:]  # Получаем аргументы, исключая саму команду
     if len(args) < 2:
-        bot.reply_to(message, "Необходимо указать ID пользователя и новый ранг (Волонтер, Директор, Владелец, Стажер Гарант, Админ).")
+        bot.reply_to(message, "Необходимо указать ID пользователя и новый ранг (например, /Ранг 123456789 Волонтер).")
         return
 
     user_id_to_change = args[0]
@@ -54,7 +53,7 @@ def set_rank(message):
     try:
         cursor.execute("UPDATE users SET rank = ? WHERE id = ?", (new_rank, int(user_id_to_change)))
         conn.commit()
-        bot.reply_to(message, f"Ранг пользователя {user_id_to_change} обновлен на {new_rank}.")
+        bot.reply_to(message, f"Ранг пользователя {user_id_to_change} обновлен на '{new_rank}'.")
     except Exception as e:
         print(f"Error updating user rank: {e}")
         bot.reply_to(message, "Произошла ошибка при обновлении ранга пользователя.")
