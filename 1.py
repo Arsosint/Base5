@@ -2,7 +2,7 @@ import telebot
 import sqlite3
 from datetime import datetime, timedelta
 
-TOKEN = 'YOUR_TELEGRAM_BOT_API_TOKEN'  # Замените на ваш токен бота
+TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'  # Замените на ваш токен бота
 OWNER_ID = 6321157988  # ID изначального владельца
 bot = telebot.TeleBot(TOKEN)
 
