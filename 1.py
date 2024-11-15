@@ -1,148 +1,86 @@
 import telebot
-from telebot import types
+import sqlite3
+from datetime import datetime, timedelta
 
-API_TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'
-bot = telebot.TeleBot(API_TOKEN)
+TOKEN = 'YOUR_TELEGRAM_BOT_API_TOKEN'  # Замените на ваш токен бота
+OWNER_ID = 6321157988  # ID изначального владельца
+bot = telebot.TeleBot(TOKEN)
 
-# База данных для хранения пользователей и их статусов
-users_db = {}
-Zaiavki = 0
-Slitoscammerov = 0
+conn = sqlite3.connect('users.db', check_same_thread=False)
+cursor = conn.cursor()
 
-# Начальный ранг
-DEFAULT_RANK = 'Нету в базе'
+# Создаем таблицу пользователей, если она не существует
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    rank TEXT DEFAULT 'Нету в базе',
+    mute_until DATETIME
+)
+''')
 
-# Функция для получения шанса скама
-def get_scam_chance(rank):
-    if rank == 'Волонтёр':
-        return '10%'
-    elif rank == 'Нету в базе':
-        return '38%'
-    elif rank == 'Стажёр':
-        return '20%'
-    elif rank == 'Проверен гарантом':
-        return '23%'
-    elif rank == 'Скаммер':
-        return '100%'
-    elif rank == 'Петух':
-        return '1000%'
-    return '0%'
+# Проверяем и добавляем изначального владельца, если он не зарегистрирован
+cursor.execute("SELECT id FROM users WHERE id = ?", (OWNER_ID,))
+if not cursor.fetchone():
+    cursor.execute("INSERT INTO users (id, rank) VALUES (?, 'владелец')", (OWNER_ID,))
+conn.commit()
 
-# Команды для управления рангами
-@bot.message_handler(commands=['траст'])
-def give_rank_trust(message):
-    user_id = message.reply_to_message.from_user.id
-    users_db[user_id] = {'rank': 'Проверен гарантом', 'iskalivbase': 0}
-    bot.reply_to(message, f"Ранг выдан пользователю {user_id}: Проверен гарантом.")
+# Помощник для парсинга строки времени
+def parse_time(time_str):
+    unit = time_str[-1]
+    if unit == 'm':
+        return timedelta(minutes=int(time_str[:-1]))
+    elif unit == 'h':
+        return timedelta(hours=int(time_str[:-1]))
+    elif unit == 'd':
+        return timedelta(days=int(time_str[:-1]))
+    return timedelta()
 
-@bot.message_handler(commands=['Админ'])
-def give_rank_admin(message):
-    user_id = message.reply_to_message.from_user.id
-    users_db[user_id] = {'rank': 'Админ', 'iskalivbase': 0}
-    bot.reply_to(message, f"Ранг выдан пользователю {user_id}: Админ.")
+# Проверка ранга пользователя
+def check_rank(user_id, ranks):
+    cursor.execute("SELECT rank FROM users WHERE id = ?", (user_id,))
+    user_rank = cursor.fetchone()
+    if user_rank:
+        return user_rank[0] in ranks
+    return False
 
-@bot.message_handler(commands=['директор'])
-def give_rank_director(message):
-    user_id = message.reply_to_message.from_user.id
-    users_db[user_id] = {'rank': 'Директор', 'iskalivbase': 0}
-    bot.reply_to(message, f"Ранг выдан пользователю {user_id}: Директор.")
+# Обновление ранга пользователя
+def update_rank(user_id, rank):
+    cursor.execute("UPDATE users SET rank = ? WHERE id = ?", (rank, user_id))
+    conn.commit()
 
-@bot.message_handler(commands=['владыка'])
-def give_rank_owner(message):
-    user_id = message.reply_to_message.from_user.id
-    users_db[user_id] = {'rank': 'Владелец', 'iskalivbase': 0}
-    bot.reply_to(message, f"Ранг выдан пользователю {user_id}: Владелец.")
+@bot.message_handler(commands=['траст', 'мут', 'делмут', 'оффтоп', 'бан', 'делбан', 'директор', 'владелец', 'админ', 'стажер', 'волонтер', 'гарант', 'снятьранг'])
+def handle_commands(message):
+    command = message.text.split()[0][1:]
+    args = message.text.split()[1:]
+    user_commander_id = message.from_user.id  # ID пользователя, который отправляет команду
 
-@bot.message_handler(commands=['Стажёр'])
-def give_rank_intern(message):
-    user_id = message.reply_to_message.from_user.id
-    users_db[user_id] = {'rank': 'Стажёр', 'iskalivbase': 0}
-    bot.reply_to(message, f"Ранг выдан пользователю {user_id}: Стажёр.")
+    if len(args) >= 1:
+        user_id = int(args[0])  # ID пользователя, на которого направлена команда
 
-@bot.message_handler(commands=['гарант'])
-def give_rank_guarantee(message):
-    user_id = message.reply_to_message.from_user.id
-    users_db[user_id] = {'rank': 'Гарант', 'iskalivbase': 0}
-    bot.reply_to(message, f"Ранг выдан пользователю {user_id}: Гарант.")
+    if command == 'траст':
+        if check_rank(user_commander_id, ['владелец', 'директор', 'админ', 'гарант']):
+            update_rank(user_id, 'Проверен гарантом')
+            bot.reply_to(message, f'Пользователю {user_id} выдан ранг "Проверен гарантом".')
 
-@bot.message_handler(commands=['скам'])
-def report_scammer(message):
-    global Zaiavki
-    parts = message.text.split()
-    user_id = int(parts[1])
-    reason = parts[2]
-    reputation = parts[3]
-    
-    users_db[user_id] = {
-        'rank': 'Скаммер',
-        'reason': reason,
-        'reputation': reputation,
-        'iskalivbase': 0
-    }
-    
-    Zaiavki += 1
-    bot.reply_to(message, f"Заявка на скамера {user_id} принята. Общее количество заявок: {Zaiavki}.")
+    elif command in ['мут', 'делмут', 'оффтоп', 'бан', 'делбан']:
+        if check_rank(user_commander_id, ['владелец', 'директор', 'админ']) or (command == 'оффтоп' and check_rank(user_commander_id, ['волонтер', 'стажер'])):
+            time_str = args[1] if len(args) > 1 else '5m'
+            reason = ' '.join(args[2:]) if len(args) > 2 else 'Не указана'
+            mute_duration = parse_time(time_str)
+            mute_until = datetime.now() + mute_duration
+            cursor.execute("UPDATE users SET mute_until = ? WHERE id = ?", (mute_until, user_id))
+            conn.commit()
+            bot.reply_to(message, f'Пользователь {user_id} заблокирован до {mute_until} по причине: {reason}')
 
-@bot.message_handler(commands=['нескам'])
-def remove_scammer(message):
-    parts = message.text.split()
-    user_id = int(parts[1])
-    reason = parts[2]
-    
-    if user_id in users_db:
-        del users_db[user_id]
-        bot.reply_to(message, f"Пользователь {user_id} удален из базы.")
-    else:
-        bot.reply_to(message, f"Пользователь {user_id} не найден в базе.")
+    elif command in ['директор', 'владелец', 'админ', 'стажер', 'волонтер', 'гарант', 'снятьранг']:
+        if check_rank(user_commander_id, ['владелец']):
+            new_rank = 'Нету в базе' if command == 'снятьранг' else command
+            update_rank(user_id, new_rank)
+            bot.reply_to(message, f'Пользователю {user_id} выдан ранг "{new_rank}".')
 
-@bot.message_handler(commands=['чек'])
-def check_user(message):
-    parts = message.text.split()
-    user_id = int(parts[1])
-    user_info = users_db.get(user_id, {'rank': DEFAULT_RANK, 'iskalivbase': 0})
-    
-    reply = f"""
-🆔 Id: {user_id}
-🔁 Репутация: {user_info['rank']}
-Шанс скама: {get_scam_chance(user_info['rank'])}
-🚮 Заявки: {Zaiavki}
-🔍 Искали в базе: {user_info['iskalivbase']}
-🐝 Stand base
-"""
-    bot.reply_to(message, reply)
+@bot.message_handler(func=lambda message: True)
+def handle_all(message):
+    bot.reply_to(message, "Команда не распознана или у вас недостаточно прав.")
 
-@bot.message_handler(commands=['спасибо'])
-def thank_user(message):
-    parts = message.text.split()
-    user_id = int(parts[1])
-    global Slitoscammerov
-    Slitoscammerov += 1
-    bot.reply_to(message, f"Спасибо! Количество слитых скамеров: {Slitoscammerov}.")
-
-@bot.message_handler(commands=['чекми'])
-def check_myself(message):
-    user_id = message.from_user.id
-    user_info = users_db.get(user_id, {'rank': DEFAULT_RANK, 'iskalivbase': 0})
-    
-    reply = f"""
-🆔 Id: {user_id}
-🔁 Репутация: {user_info['rank']}
-Шанс скама: {get_scam_chance(user_info['rank'])}
-🚮 Заявки: {Zaiavki}
-🔍 Искали в базе: {user_info['iskalivbase']}
-🐝 Stand base
-"""
-    bot.reply_to(message, reply)
-
-@bot.message_handler(commands=['бан'])
-def ban_user(message):
-    user_id = message.reply_to_message.from_user.id
-    # Здесь вы можете добавить логику для кика пользователя
-
-@bot.message_handler(commands=['мут'])
-def mute_user(message):
-    user_id = message.reply_to_message.from_user.id
-    # Здесь вы можете добавить логику для мута пользователя
-
-# Основной цикл
-bot.polling()
+if __name__ == '__main__':
+    bot.polling(non_stop=True)
