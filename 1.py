@@ -2,48 +2,22 @@ import telebot
 import sqlite3
 import time
 
-# Глобальная переменная для соединения с базой данных
-global conn
-conn = None
-
 # Токен вашего бота
 bot = telebot.TeleBot('8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM')
 
-# Функция для инициализации соединения с базой данных
-def init_db():
-    global conn
-    conn = sqlite3.connect('bot_data.db')
-    cursor = conn.cursor()
-    # Создание таблицы, если она не существует
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            tg_id INTEGER UNIQUE,
-            rank TEXT DEFAULT 'Нету в базе',
-            mute_until INTEGER,
-            ban_until INTEGER,
-            mute_reason TEXT,
-            ban_reason TEXT
-        )
-    ''')
-    # Добавление начального владельца
-    cursor.execute("INSERT OR IGNORE INTO users (id, tg_id, rank) VALUES (1, 6321157988, 'Владелец')")
-    conn.commit()
-
-# Вызов функции инициализации соединения
-init_db()
-
 # Функция для получения ранга пользователя
 def get_user_rank(tg_id):
-    cursor = conn.cursor()
-    cursor.execute("SELECT rank FROM users WHERE tg_id=?", (tg_id,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
-    else:
-        cursor.execute("INSERT OR IGNORE INTO users (tg_id) VALUES (?)", (tg_id,))
-        conn.commit()
-        return 'Нету в базе'
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT rank FROM users WHERE tg_id=?", (tg_id,))
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+        else:
+            cursor.execute("INSERT OR IGNORE INTO users (tg_id) VALUES (?)", (tg_id,))
+            conn.commit()
+            return 'Нету в базе'
 
 # Функция для проверки прав доступа
 def has_permissions(tg_id, command):
@@ -75,9 +49,11 @@ def mute_user(message):
     reason = ' '.join(args[1:-1])
     duration = int(args[-1])
 
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET mute_until=?, mute_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
-    conn.commit()
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET mute_until=?, mute_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
+        conn.commit()
 
     bot.send_message(message.chat.id, f'Пользователь @{tg_id} заглушен на {duration} секунд.')
 
@@ -97,9 +73,11 @@ def ban_user(message):
     reason = ' '.join(args[1:-1])
     duration = int(args[-1])
 
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET ban_until=?, ban_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
-    conn.commit()
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET ban_until=?, ban_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
+        conn.commit()
 
     bot.send_message(message.chat.id, f'Пользователь @{tg_id} забанен на {duration} секунд.')
 
@@ -120,9 +98,11 @@ def unmute_user(message):
     count = int(args[-2])
     duration = int(args[-1])
 
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET mute_until=?, mute_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
-    conn.commit()
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET mute_until=?, mute_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
+        conn.commit()
 
     # Удаление последних сообщений
     try:
@@ -142,9 +122,11 @@ def offtop_user(message):
         return
 
     tg_id = message.text.split()[1][1:]
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET mute_until=?, mute_reason='Оффтоп' WHERE tg_id=?", (int(time.time()) + 300, tg_id))
-    conn.commit()
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET mute_until=?, mute_reason='Оффтоп' WHERE tg_id=?", (int(time.time()) + 300, tg_id))
+        conn.commit()
 
     bot.send_message(message.chat.id, f'Пользователь @{tg_id} заглушен на 5 минут за оффтоп.')
 
@@ -165,9 +147,11 @@ def unban_user(message):
     count = int(args[-2])
     duration = int(args[-1])
 
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET ban_until=?, ban_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
-    conn.commit()
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET ban_until=?, ban_reason=? WHERE tg_id=?", (int(time.time()) + duration, reason, tg_id))
+        conn.commit()
 
     # Удаление последних сообщений
     try:
@@ -194,9 +178,11 @@ def set_rank(message):
     tg_id = int(args[0])
     rank = args[1]
 
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET rank=? WHERE tg_id=?", (rank, tg_id))
-    conn.commit()
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET rank=? WHERE tg_id=?", (rank, tg_id))
+        conn.commit()
 
     bot.send_message(message.chat.id, f'Пользователю {tg_id} выдан ранг {rank}.')
 
@@ -208,9 +194,11 @@ def remove_rank(message):
         return
 
     tg_id = int(message.text.split()[1])
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET rank='Нету в базе' WHERE tg_id=?", (tg_id,))
-    conn.commit()
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET rank='Нету в базе' WHERE tg_id=?", (tg_id,))
+        conn.commit()
 
     bot.send_message(message.chat.id, f'Ранг пользователя {tg_id} снят.')
 
@@ -228,24 +216,23 @@ def trust_user(message):
 @bot.message_handler(func=lambda message: True)
 def check_mute_ban(message):
     tg_id = message.from_user.id
-    cursor = conn.cursor()
-    cursor.execute("SELECT mute_until, ban_until FROM users WHERE tg_id=?", (tg_id,))
-    row = cursor.fetchone()
-    mute_until = row[0]
-    ban_until = row[1]
+    conn = sqlite3.connect('bot_data.db')
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT mute_until, ban_until FROM users WHERE tg_id=?", (tg_id,))
+        row = cursor.fetchone()
+        mute_until = row[0]
+        ban_until = row[1]
 
-    if mute_until and int(time.time()) < mute_until:
-        bot.delete_message(message.chat.id, message.message_id)
-        bot.send_message(message.chat.id, f'Пользователь @{tg_id} заглушен. Причина: {row[2]}')
-        return
+        if mute_until and int(time.time()) < mute_until:
+            bot.delete_message(message.chat.id, message.message_id)
+            bot.send_message(message.chat.id, f'Пользователь @{tg_id} заглушен. Причина: {row[2]}')
+            return
 
-    if ban_until and int(time.time()) < ban_until:
-        bot.delete_message(message.chat.id, message.message_id)
-        bot.send_message(message.chat.id, f'Пользователь @{tg_id} забанен. Причина: {row[3]}')
-        return
+        if ban_until and int(time.time()) < ban_until:
+            bot.delete_message(message.chat.id, message.message_id)
+            bot.send_message(message.chat.id, f'Пользователь @{tg_id} забанен. Причина: {row[3]}')
+            return
 
 # Запуск бота
 bot.polling(none_stop=True)
-
-# Закрытие соединения с базой данных
-conn.close()
