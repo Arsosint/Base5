@@ -24,7 +24,7 @@ cursor.execute("INSERT OR IGNORE INTO users (id, tg_id, rank) VALUES (1, 6321157
 conn.commit()
 
 # Токен вашего бота
-bot = telebot.TeleBot('YOUR_BOT_TOKEN')
+bot = telebot.TeleBot('8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM')
 
 # Функция для получения ранга пользователя
 def get_user_rank(tg_id):
