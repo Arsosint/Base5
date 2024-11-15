@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 import time
 
-API_TOKEN = 'YOUR_API_TOKEN'
+API_TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'
 bot = telebot.TeleBot(API_TOKEN)
 
 user_roles = {}  # Хранит роли пользователей
