@@ -1,7 +1,7 @@
 import telebot
 import sqlite3
 
-TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'  # Вставьте сюда ваш токен бота
+TOKEN = 'YOUR_TOKEN_HERE'  # Вставьте сюда ваш токен бота
 OWNER_ID = 6321157988  # ID владельца бота
 bot = telebot.TeleBot(TOKEN)
 
@@ -18,22 +18,21 @@ CREATE TABLE IF NOT EXISTS users (
 ''')
 conn.commit()
 
+def get_user_rank(user_id):
+    cursor.execute("SELECT rank FROM users WHERE id = ?", (user_id,))
+    result = cursor.fetchone()
+    if result:
+        return result[0]
+    return None
+
 def is_owner(user_id):
-    return user_id == OWNER_ID
-
-def can_issue_rank(user_id):
-    cursor.execute("SELECT rank FROM users WHERE id = ?", (user_id,))
-    rank = cursor.fetchone()
-    return rank and rank[0] in ['гарант', 'директор', 'владелец']
-
-def can_remove_rank(user_id):
-    cursor.execute("SELECT rank FROM users WHERE id = ?", (user_id,))
-    rank = cursor.fetchone()
-    return rank and rank[0] == 'владелец'
+    user_rank = get_user_rank(user_id)
+    return user_rank == 'владелец' or user_id == OWNER_ID
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     bot.reply_to(message, "Привет! Это бот для АнтиСкам Базы Stand Base")
+    bot.reply_to(message, f"Ваш user ID: {message.from_user.id}")
 
 @bot.message_handler(commands=['ранг'])
 def set_rank(message):
@@ -45,64 +44,24 @@ def set_rank(message):
         return
 
     if len(args) < 2:
-        bot.reply_to(message, "Необходимо указать юзер и ранг.")
+        bot.reply_to(message, "Необходимо указать username и ранг.")
         return
 
-    tg_username = args[0]
-    new_rank = args[1]
+    tg_username, new_rank = args
 
-    if new_rank not in ['волонтëр', 'админ', 'владелец', 'стажёр', 'гарант', 'директор']:
-        bot.reply_to(message, "Некорректный ранг. Доступные ранги: волонтëр, админ, владелец, стажёр, гарант, директор.")
+    if new_rank not in ['волонтёр', 'админ', 'владелец', 'стажёр', 'гарант', 'директор']:
+        bot.reply_to(message, "Некорректный ранг. Доступные ранги: волонтёр, админ, владелец, стажёр, гарант, директор.")
         return
 
     cursor.execute("INSERT OR IGNORE INTO users (username, rank) VALUES (?, 'Нету в базе')", (tg_username,))
     cursor.execute("UPDATE users SET rank = ? WHERE username = ?", (new_rank, tg_username))
     conn.commit()
 
-    bot.reply_to(message, f"пользователь {tg_username} повышен до {new_rank}.")
-
-@bot.message_handler(commands=['снятьранг'])
-def remove_rank(message):
-    user_id = message.from_user.id
-    if not can_remove_rank(user_id):
-        bot.reply_to(message, "Только владелец может использовать эту команду.")
-        return
-
-    args = message.text.split()[1:]
-    if len(args) < 1:
-        bot.reply_to(message, "Необходимо указать юзер.")
-        return
-
-    tg_username = args[0]
-    
-    cursor.execute("UPDATE users SET rank = 'Нету в базе' WHERE username = ?", (tg_username,))
-    conn.commit()
-
-    bot.reply_to(message, f"Ранг пользователя {tg_username} снят и понижен до 'Нету в базе'.")
-
-@bot.message_handler(commands=['траст'])
-def trust_user(message):
-    user_id = message.from_user.id
-    if not can_issue_rank(user_id):
-        bot.reply_to(message, "У вас нет прав для использования этой команды.")
-        return
-
-    args = message.text.split()[1:]
-    if len(args) < 1:
-        bot.reply_to(message, "Необходимо указать юзер.")
-        return
-
-    tg_username = args[0]
-    
-    cursor.execute("INSERT OR IGNORE INTO users (username, rank) VALUES (?, 'Нету в базе')", (tg_username,))
-    cursor.execute("UPDATE users SET rank = 'Проверен Гарантом' WHERE username = ?", (tg_username,))
-    conn.commit()
-
-    bot.reply_to(message, f"Пользователю {tg_username} выдан ранг 'Проверен Гарантом'.")
+    bot.reply_to(message, f"Пользователь {tg_username} повышен до {new_rank}.")
 
 @bot.message_handler(func=lambda message: True)
 def catch_all(message):
-    bot.reply_to(message, "Ошибка: данной команды не существует.")
+    bot.reply_to(message, 'Ошибка: данной команды не существует.')
 
 if __name__ == '__main__':
     bot.polling(non_stop=True)
