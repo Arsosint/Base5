@@ -1,7 +1,7 @@
 import telebot
 import sqlite3
 
-TOKEN = 'YOUR_TOKEN_HERE'  # Вставьте сюда ваш токен бота
+TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'  # Вставьте сюда ваш токен бота
 OWNER_ID = 6321157988  # ID владельца бота
 bot = telebot.TeleBot(TOKEN)
 
