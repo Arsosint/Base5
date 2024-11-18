@@ -16,7 +16,6 @@ conn.commit()
 
 # Изначальный владелец
 owner_id = 6321157988
-add_user(owner_id, 'Владелец')
 
 def user_exists(user_id):
     cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
@@ -25,6 +24,8 @@ def user_exists(user_id):
 def add_user(user_id, rank='Нету в базе'):
     cursor.execute("INSERT INTO users (user_id, rank) VALUES (?, ?)", (user_id, rank))
     conn.commit()
+
+add_user(owner_id, 'Владелец')  # Переместите этот вызов сюда
 
 def set_mute(user_id, duration):
     mute_until = datetime.now() + timedelta(minutes=duration)
