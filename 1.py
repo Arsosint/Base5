@@ -2,8 +2,8 @@ import telebot
 import sqlite3
 from datetime import datetime, timedelta
 
-# Замените 'YOUR_TOKEN' на токен вашего бота
-API_TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'
+# Замените '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM' на токен вашего бота
+API_TOKEN = 'YOUR_TOKEN'
 bot = telebot.TeleBot(API_TOKEN)
 
 # Создание базы данных
@@ -179,7 +179,8 @@ def check_handler(message):
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki = user_data
         
         if rank in ['Админ', 'Владелец', 'Директор']:
-            bot.reply_to(message, f"""
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+                           caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -188,7 +189,8 @@ def check_handler(message):
 🐝 Stand base
             """)
         elif rank == 'Гарант':
-            bot.reply_to(message, f"""
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+                           caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -197,11 +199,22 @@ def check_handler(message):
 🐝 Stand base
             """)
         elif rank == 'Возможно скаммер':
-            bot.reply_to(message, f"""
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13Qugn3OBKX4r4JKScUjNj7-PYbq42JhQ/view?usp=drivesdk',
+                           caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
-Шанс скама: 70%
+Шанс скама: 60%
 🚮 Заявки: {zaiavki}
+🔍 Искали в базе: {iskalivbase}
+🐝 Stand base
+            """)
+        elif rank == 'Скамер петух':
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13gb7Sxcm1sS6eoq1e6RLD5gFHM8r_JWI/view?usp=drivesdk',
+                           caption=f"""
+🆔 Id: {user_id}
+🔁 Репутация: {rank}
+Шанс скама: 99%
+🚮 Слито скамеров: {slitoscammerov}
 🔍 Искали в базе: {iskalivbase}
 🐝 Stand base
             """)
@@ -215,7 +228,8 @@ def check_handler(message):
                 chance_of_scam = 20
             elif rank == 'Проверен гарантом':
                 chance_of_scam = 23
-            bot.reply_to(message, f"""
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13IHoB08r3irZdN3n-kG9jS4eg2Lu4WdU/view?usp=drivesdk',
+                           caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -235,7 +249,8 @@ def check_me_handler(message):
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki = user_data
         
         if rank in ['Админ', 'Владелец', 'Директор']:
-            bot.reply_to(message, f"""
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+                           caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -244,7 +259,8 @@ def check_me_handler(message):
 🐝 Stand base
             """)
         elif rank == 'Гарант':
-            bot.reply_to(message, f"""
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+                           caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -262,7 +278,8 @@ def check_me_handler(message):
                 chance_of_scam = 20
             elif rank == 'Проверен гарантом':
                 chance_of_scam = 23
-            bot.reply_to(message, f"""
+            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13IHoB08r3irZdN3n-kG9jS4eg2Lu4WdU/view?usp=drivesdk',
+                           caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -272,5 +289,4 @@ def check_me_handler(message):
             """)
     else:
         bot.reply_to(message, "Вы не найдены в базе.")
-
-bot.polling(none_stop=True)
+bot.polling(none_stop=True) 
