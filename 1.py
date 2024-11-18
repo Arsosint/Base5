@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 # Замените '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM' на токен вашего бота
-API_TOKEN = 'YOUR_TOKEN'
+API_TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'
 bot = telebot.TeleBot(API_TOKEN)
 
 # Создание базы данных
