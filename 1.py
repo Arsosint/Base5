@@ -1,8 +1,9 @@
+
 import telebot
 import sqlite3
 from datetime import datetime, timedelta
 
-API_TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'
+API_TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'  # Замените на ваш токен
 bot = telebot.TeleBot(API_TOKEN)
 
 # Создание базы данных
@@ -14,16 +15,17 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users
 conn.commit()
 
 owner_id = 6321157988
+owner_rank = 'Владелец'  # Установите ранг владельца
 
 def user_exists(user_id):
     cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
     return cursor.fetchone() is not None
 
-def add_user(user_id):
-    cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
+def add_user(user_id, rank='Нету в базе'):
+    cursor.execute("INSERT INTO users (user_id, rank) VALUES (?, ?)", (user_id, rank))
     conn.commit()
 
-add_user(owner_id)  # Добавляем владельца бота
+add_user(owner_id, owner_rank)  # Добавляем владельца бота с его рангом
 
 def set_mute(user_id, duration):
     mute_until = datetime.now() + timedelta(minutes=duration)
@@ -35,12 +37,12 @@ def set_ban(user_id, duration):
     cursor.execute("UPDATE users SET ban_until=? WHERE user_id=?", (ban_until, user_id))
     conn.commit()
 
-def add_scammer(user_id, reason, reputation, evidence):
+def add_scammer(user_id, reason, evidence):
     cursor.execute("UPDATE users SET rank=?, slitoscammerov=slitoscammerov+1, zaiavki=zaiavki+1, evidence=? WHERE user_id=?", ('Скаммер', evidence, user_id))
     cursor.execute("UPDATE users SET evidence = evidence || ? WHERE user_id=?", (f", {evidence}", user_id))
     conn.commit()
 
-def remove_scammer(user_id, reason):
+def remove_scammer(user_id):
     cursor.execute("UPDATE users SET rank='Нету в базе' WHERE user_id=?", (user_id,))
     conn.commit()
 
@@ -63,13 +65,14 @@ def check_handler(message):
     user_id = int(parts[1])
     cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
     user_data = cursor.fetchone()
-    print(user_data)  # Отладочная строка
     if user_data:
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki, evidence = user_data
         
+        # Отображение информации о пользователе в зависимости от его ранга
         if rank in ['Админ', 'Владелец', 'Директор']:
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957060/1000006422.jpg',
                            caption=f"""
+Вывожу информацию о пользователе
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -80,6 +83,7 @@ def check_handler(message):
         elif rank == 'Гарант':
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957061/1000006419.jpg',
                            caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -91,6 +95,7 @@ def check_handler(message):
             chance_of_scam = 60
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img181/4957063/1000006420.jpg',
                            caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 🛰️ Доказательство: {evidence}
@@ -103,6 +108,7 @@ def check_handler(message):
             chance_of_scam = 99
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img2/4957062/1000006417.jpg',
                            caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 🛰️ Доказательство: {evidence}
@@ -117,6 +123,7 @@ def check_handler(message):
                 chance_of_scam = 10
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img274/4957067/1000006523.jpg',
                                caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -128,6 +135,7 @@ def check_handler(message):
                 chance_of_scam = 38
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img53/4957058/1000006423.jpg',
                                caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -139,6 +147,7 @@ def check_handler(message):
                 chance_of_scam = 20
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img263/4957066/1000006522.jpg',
                                caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -150,6 +159,7 @@ def check_handler(message):
                 chance_of_scam = 23
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img233/4957059/1000006425.jpg',
                                caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -161,6 +171,7 @@ def check_handler(message):
         chance_of_scam = 38  # Устанавливаем шанс скама, если пользователь не найден
         bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img53/4957058/1000006423.jpg',
                        caption=f"""
+Вывожу информацию о пользователе:
 🆔 Id: {user_id}
 🔁 Репутация: Нету в базе
 Шанс скама: {chance_of_scam}%
@@ -174,13 +185,14 @@ def check_me_handler(message):
     user_id = message.from_user.id
     cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
     user_data = cursor.fetchone()
-    print(user_data)  # Отладочная строка
     if user_data:
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki, evidence = user_data
         
+        # Тот же код для отображения данных о пользователе
         if rank in ['Админ', 'Владелец', 'Директор']:
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957060/1000006422.jpg',
                            caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -191,6 +203,7 @@ def check_me_handler(message):
         elif rank == 'Гарант':
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957061/1000006419.jpg',
                            caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: 0%
@@ -202,6 +215,7 @@ def check_me_handler(message):
             chance_of_scam = 60
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img181/4957063/1000006420.jpg',
                            caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 🛰️ Доказательство: {evidence}
@@ -214,6 +228,7 @@ def check_me_handler(message):
             chance_of_scam = 99
             bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img2/4957062/1000006417.jpg',
                            caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 🛰️ Доказательство: {evidence}
@@ -228,6 +243,7 @@ def check_me_handler(message):
                 chance_of_scam = 10
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img274/4957067/1000006523.jpg',
                                caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -239,6 +255,7 @@ def check_me_handler(message):
                 chance_of_scam = 38
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img53/4957058/1000006423.jpg',
                                caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -250,6 +267,7 @@ def check_me_handler(message):
                 chance_of_scam = 20
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img263/4957066/1000006522.jpg',
                                caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -261,6 +279,7 @@ def check_me_handler(message):
                 chance_of_scam = 23
                 bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img233/4957059/1000006425.jpg',
                                caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
@@ -272,6 +291,7 @@ def check_me_handler(message):
         chance_of_scam = 38  # Устанавливаем шанс скама, если пользователь не найден
         bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img53/4957058/1000006423.jpg',
                        caption=f"""
+Вывожу информацию о вас:
 🆔 Id: {user_id}
 🔁 Репутация: Нету в базе
 Шанс скама: {chance_of_scam}%
@@ -280,128 +300,48 @@ def check_me_handler(message):
 🐝 Stand base
         """)
 
-@bot.message_handler(commands=['делбан'])
-def del_ban_handler(message):
-    parts = message.text.split()
-    if len(parts) != 5:
-        bot.reply_to(message, "Используйте: /делбан (id) (причина) (время) (кол-во)")
-        return
-    user_id = int(parts[1])
-    reason = ' '.join(parts[2:-2])
-    duration = int(parts[-2])
-    delete_count = int(parts[-1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        set_ban(user_id, duration)
-        bot.delete_messages(chat_id=message.chat.id, message_ids=[message.message_id])
-        bot.delete_messages(chat_id=message.chat.id, message_ids=range(message.message_id - delete_count, message.message_id))
-        bot.send_message(chat_id=message.chat.id, text=f"Пользователь {user_id} забанен на {duration} минут. Причина: {reason}")
-    else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
-
-@bot.message_handler(commands=['делмут'])
-def del_mute_handler(message):
-    parts = message.text.split()
-    if len(parts) != 5:
-        bot.reply_to(message, "Используйте: /делмут (id) (причина) (время) (кол-во)")
-        return
-    user_id = int(parts[1])
-    reason = ' '.join(parts[2:-2])
-    duration = int(parts[-2])
-    delete_count = int(parts[-1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        set_mute(user_id, duration)
-        bot.delete_messages(chat_id=message.chat.id, message_ids=[message.message_id])
-        bot.delete_messages(chat_id=message.chat.id, message_ids=range(message.message_id - delete_count, message.message_id))
-        bot.send_message(chat_id=message.chat.id, text=f"Пользователь {user_id} заглушен на {duration} минут. Причина: {reason}")
-    else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
-
 @bot.message_handler(commands=['мут'])
 def mute_handler(message):
     parts = message.text.split()
-    if len(parts) != 4:
-        bot.reply_to(message, "Используйте: /мут (id) (причина) (время)")
+    if len(parts) != 3:
+        bot.reply_to(message, "Используйте: /мут (id) (время в минутах)")
         return
     user_id = int(parts[1])
-    reason = ' '.join(parts[2:-1])
-    duration = int(parts[-1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
+    duration = int(parts[2])
+    if user_exists(user_id):
         set_mute(user_id, duration)
-        bot.reply_to(message, f"Пользователь {user_id} заглушен на {duration} минут. Причина: {reason}")
+        bot.reply_to(message, f"Пользователь {user_id} замучен на {duration} минут.")
     else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
+        bot.reply_to(message, "Пользователь не найден.")
 
 @bot.message_handler(commands=['бан'])
 def ban_handler(message):
     parts = message.text.split()
-    if len(parts) != 4:
-        bot.reply_to(message, "Используйте: /бан (id) (причина) (время)")
-        return
-    user_id = int(parts[1])
-    reason = ' '.join(parts[2:-1])
-    duration = int(parts[-1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        set_ban(user_id, duration)
-        bot.reply_to(message, f"Пользователь {user_id} забанен на {duration} минут. Причина: {reason}")
-    else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
-
-@bot.message_handler(commands=['ранг'])
-def set_rank_handler(message):
-    parts = message.text.split()
     if len(parts) != 3:
-        bot.reply_to(message, "Используйте: /ранг (id) (ранг)")
+        bot.reply_to(message, "Используйте: /бан (id) (время в минутах)")
         return
     user_id = int(parts[1])
-    new_rank = parts[2]
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        set_rank(user_id, new_rank)
-        bot.reply_to(message, f"Пользователю {user_id} установлен ранг: {new_rank}")
+    duration = int(parts[2])
+    if user_exists(user_id):
+        set_ban(user_id, duration)
+        bot.reply_to(message, f"Пользователь {user_id} забанен на {duration} минут.")
     else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
+        bot.reply_to(message, "Пользователь не найден.")
 
-@bot.message_handler(commands=['снятьранг'])
-def remove_rank_handler(message):
-    parts = message.text.split()
-    if len(parts) != 2:
-        bot.reply_to(message, "Используйте: /снятьранг (id)")
-        return
-    user_id = int(parts[1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        set_rank(user_id, 'Нету в базе')
-        bot.reply_to(message, f"Ранг пользователя {user_id} снижен до 'Нету в базе'")
-    else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
-
-@bot.message_handler(commands=['Скам'])
+@bot.message_handler(commands=['скам'])
 def add_scammer_handler(message):
     parts = message.text.split()
-    if len(parts) != 5:
-        bot.reply_to(message, "Используйте: /Скам (id) (причина) (доказательство) (репутация)")
+    if len(parts) < 4:
+        bot.reply_to(message, "Используйте: /скам (id) (причина) (доказательства)")
         return
     user_id = int(parts[1])
-    reason = ' '.join(parts[2:4])
-    evidence = parts[4]
-    reputation = 'Скаммер'
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        add_scammer(user_id, reason, reputation, evidence)
-        bot.reply_to(message, f"Пользователю {user_id} присвоен ранг 'Скаммер'. Причина: {reason}, Доказательство: {evidence}")
+    reason = parts[2]
+    evidence = " ".join(parts[3:])
+    if user_exists(user_id):
+        add_scammer(user_id, reason, evidence)
+        bot.reply_to(message, f"Пользователь {user_id} добавлен в скаммеры.")
     else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
+        bot.reply_to(message, "Пользователь не найден.")
 
 @bot.message_handler(commands=['нескам'])
 def remove_scammer_handler(message):
@@ -410,57 +350,25 @@ def remove_scammer_handler(message):
         bot.reply_to(message, "Используйте: /нескам (id)")
         return
     user_id = int(parts[1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        remove_scammer(user_id, "Исправлен")
-        bot.reply_to(message, f"Пользователь {user_id} удален из базы как скаммер.")
+    if user_exists(user_id):
+        remove_scammer(user_id)
+        bot.reply_to(message, f"Пользователь {user_id} убран из скаммеров.")
     else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
+        bot.reply_to(message, "Пользователь не найден.")
 
-@bot.message_handler(commands=['траст'])
-def trust_handler(message):
+@bot.message_handler(commands=['ранг'])
+def set_rank_handler(message):
     parts = message.text.split()
-    if len(parts) != 2:
-        bot.reply_to(message, "Используйте: /траст (id)")
+    if len(parts) != 3:
+        bot.reply_to(message, "Используйте: /ранг (id) (новый ранг)")
         return
     user_id = int(parts[1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        set_rank(user_id, 'Проверен гарантом')
-        bot.reply_to(message, f"Пользователю {user_id} выдан ранг 'Проверен гарантом'.")
+    new_rank = parts[2]
+    if user_exists(user_id):
+        set_rank(user_id, new_rank)
+        bot.reply_to(message, f"Ранг пользователя {user_id} изменен на {new_rank}.")
     else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
+        bot.reply_to(message, "Пользователь не найден.")
 
-@bot.message_handler(commands=['спасибо'])
-def thank_handler(message):
-    parts = message.text.split()
-    if len(parts) != 2:
-        bot.reply_to(message, "Используйте: /спасибо (id)")
-        return
-    user_id = int(parts[1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        add_scammer(user_id, "Благодарность", 0, "")
-        bot.reply_to(message, f"Пользователю {user_id} добавлен 1 к 'Слито Скамеров'.")
-    else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
-
-@bot.message_handler(commands=['оффтоп'])
-def offtopic_handler(message):
-    parts = message.text.split()
-    if len(parts) != 2:
-        bot.reply_to(message, "Используйте: /оффтоп (id)")
-        return
-    user_id = int(parts[1])
-    
-    # Проверяем права пользователя
-    if message.from_user.id in [owner_id]:
-        set_mute(user_id, 5)
-        bot.reply_to(message, f"Пользователь {user_id} заглушен на 5 минут.")
-    else:
-        bot.reply_to(message, "У вас недостаточно прав для выполнения этой команды.")
-
-bot.polling(none_stop=True)
+# Запуск бота
+bot.polling()
