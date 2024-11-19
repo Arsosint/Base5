@@ -25,7 +25,7 @@ def add_user(user_id, rank='Нету в базе'):
     cursor.execute("INSERT INTO users (user_id, rank) VALUES (?, ?)", (user_id, rank))
     conn.commit()
 
-add_user(owner_id, owner_rank)  # Добавляем владельца бота с его рангом
+add_user(owner_id, owner_rank)  
 
 def set_mute(user_id, duration):
     mute_until = datetime.now() + timedelta(minutes=duration)
