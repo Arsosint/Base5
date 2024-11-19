@@ -1,8 +1,8 @@
+
 import telebot
 import sqlite3
 from datetime import datetime, timedelta
 
-# Замените '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM' на токен вашего бота
 API_TOKEN = '8105252956:AAHZr5AgjBDyIYh1MVkJ15hk-FZjJRKGSBM'
 bot = telebot.TeleBot(API_TOKEN)
 
@@ -14,7 +14,6 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users
                    slitoscammerov INTEGER DEFAULT 0, iskalivbase INTEGER DEFAULT 0, zaiavki INTEGER DEFAULT 0)''')
 conn.commit()
 
-# Изначальный владелец
 owner_id = 6321157988
 
 def user_exists(user_id):
@@ -25,7 +24,7 @@ def add_user(user_id, rank='Нету в базе'):
     cursor.execute("INSERT INTO users (user_id, rank) VALUES (?, ?)", (user_id, rank))
     conn.commit()
 
-add_user(owner_id, 'Владелец')  # Переместите этот вызов сюда
+add_user(owner_id, 'Владелец')
 
 def set_mute(user_id, duration):
     mute_until = datetime.now() + timedelta(minutes=duration)
@@ -56,117 +55,6 @@ def start_handler(message):
     if not user_exists(user_id):
         add_user(user_id)
 
-@bot.message_handler(commands=['ранг'])
-def rank_handler(message):
-    parts = message.text.split()
-    if len(parts) != 3:
-        bot.reply_to(message, "Используйте: /ранг (id) (ранг)")
-        return
-    user_id = int(parts[1])
-    new_rank = parts[2]
-    set_rank(user_id, new_rank)
-    bot.reply_to(message, f"Пользователю {user_id} установлен ранг {new_rank}")
-
-@bot.message_handler(commands=['траст'])
-def trust_handler(message):
-    parts = message.text.split()
-    if len(parts) != 3:
-        bot.reply_to(message, "Используйте: /траст (id) (ранг)")
-        return
-    user_id = int(parts[1])
-    new_rank = parts[2]
-    set_rank(user_id, new_rank)
-    bot.reply_to(message, f"Пользователь {user_id} получил ранг {new_rank}")
-
-@bot.message_handler(commands=['скам'])
-def scam_handler(message):
-    parts = message.text.split()
-    if len(parts) != 5:
-        bot.reply_to(message, "Используйте: /скам (id) (причина) (репутация) (доказательства)")
-        return
-    user_id = int(parts[1])
-    reason = parts[2]
-    reputation = parts[3]
-    evidence = parts[4]
-    add_scammer(user_id, reason, reputation, evidence)
-    bot.reply_to(message, f"Пользователь {user_id} добавлен в базу как скамер")
-
-@bot.message_handler(commands=['нескам'])
-def unscam_handler(message):
-    parts = message.text.split()
-    if len(parts) != 3:
-        bot.reply_to(message, "Используйте: /нескам (id) (причина)")
-        return
-    user_id = int(parts[1])
-    reason = parts[2]
-    remove_scammer(user_id, reason)
-    bot.reply_to(message, f"Пользователь {user_id} удален из базы скамеров")
-
-@bot.message_handler(commands=['мут'])
-def mute_handler(message):
-    parts = message.text.split()
-    if len(parts) != 4:
-        bot.reply_to(message, "Используйте: /мут (id) (причина) (время в минутах)")
-        return
-    user_id = int(parts[1])
-    reason = parts[2]
-    duration = int(parts[3])
-    set_mute(user_id, duration)
-    bot.reply_to(message, f"Пользователь {user_id} замучен на {duration} минут(ы) по причине: {reason}")
-
-@bot.message_handler(commands=['делмут'])
-def del_mute_handler(message):
-    parts = message.text.split()
-    if len(parts) != 5:
-        bot.reply_to(message, "Используйте: /делмут (id) (кол-во) (причина) (время в минутах)")
-        return
-    user_id = int(parts[1])
-    message_count = int(parts[2])
-    reason = parts[3]
-    duration = int(parts[4])
-    set_mute(user_id, duration)
-    # Логика удаления сообщений
-    bot.reply_to(message, f"Пользователь {user_id} замучен на {duration} минут(ы) с удалением {message_count} сообщений по причине: {reason}")
-
-@bot.message_handler(commands=['бан'])
-def ban_handler(message):
-    parts = message.text.split()
-    if len(parts) != 3:
-        bot.reply_to(message, "Используйте: /бан (id) (причина)")
-        return
-    user_id = int(parts[1])
-    reason = parts[2]
-    set_ban(user_id, 0)
-    bot.reply_to(message, f"Пользователь {user_id} забанен по причине: {reason}")
-
-@bot.message_handler(commands=['оффтоп'])
-def offtopic_handler(message):
-    parts = message.text.split()
-    if len(parts) != 3:
-        bot.reply_to(message, "Используйте: /оффтоп (id) (причина)")
-        return
-    user_id = int(parts[1])
-    reason = parts[2]
-    set_mute(user_id, 5)
-    bot.reply_to(message, f"Пользователь {user_id} замучен на 5 минут по причине: {reason}")
-
-@bot.message_handler(commands=['снятьранг'])
-def remove_rank_handler(message):
-    user_id = message.from_user.id
-    set_rank(user_id, 'Нету в базе')
-    bot.reply_to(message, "Ваш ранг снижен до 'Нету в базе'.")
-
-@bot.message_handler(commands=['спасибо'])
-def thank_handler(message):
-    parts = message.text.split()
-    if len(parts) != 2:
-        bot.reply_to(message, "Используйте: /спасибо (id)")
-        return
-    user_id = int(parts[1])
-    cursor.execute("UPDATE users SET slitoscammerov=slitoscammerov+1 WHERE user_id=?", (user_id,))
-    conn.commit()
-    bot.reply_to(message, f"Пользователю {user_id} добавлен 1 к счетчику 'Слито скамеров'.")
-
 @bot.message_handler(commands=['чек'])
 def check_handler(message):
     parts = message.text.split()
@@ -176,6 +64,7 @@ def check_handler(message):
     user_id = int(parts[1])
     cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
     user_data = cursor.fetchone()
+    print(user_data)  # Отладочная строка
     if user_data:
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki = user_data
         
@@ -246,6 +135,7 @@ def check_me_handler(message):
     user_id = message.from_user.id
     cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
     user_data = cursor.fetchone()
+    print(user_data)  # Отладочная строка
     if user_data:
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki = user_data
         
@@ -290,4 +180,5 @@ def check_me_handler(message):
             """)
     else:
         bot.reply_to(message, "Вы не найдены в базе.")
-bot.polling(none_stop=True) 
+
+bot.polling(none_stop=True)
