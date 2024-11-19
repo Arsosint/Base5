@@ -37,7 +37,7 @@ def set_ban(user_id, duration):
     conn.commit()
 
 def add_scammer(user_id, reason, reputation, evidence):
-    cursor.execute("UPDATE users SET rank=?, slitoscammerov=slitoscammerov+1, zaiavki=zaiavki+1 WHERE user_id=?", ('Скамер петух', user_id))
+    cursor.execute("UPDATE users SET rank=?, slitoscammerov=slitoscammerov+1, zaiavki=zaiavki+1 WHERE user_id=?", ('Скаммер', user_id))
     cursor.execute("INSERT INTO users (user_id, rank, slitoscammerov, zaiavki) VALUES (?, 'Возможно скаммер', 0, 1)", (user_id,))
     conn.commit()
 
@@ -69,7 +69,7 @@ def check_handler(message):
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki = user_data
         
         if rank in ['Админ', 'Владелец', 'Директор']:
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+            bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957060/1000006422.jpg',
                            caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
@@ -79,7 +79,7 @@ def check_handler(message):
 🐝 Stand base
             """)
         elif rank == 'Гарант':
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+            bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957061/1000006419.jpg',
                            caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
@@ -89,7 +89,7 @@ def check_handler(message):
 🐝 Stand base
             """)
         elif rank == 'Возможно скаммер':
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13Qugn3OBKX4r4JKScUjNj7-PYbq42JhQ/view?usp=drivesdk',
+            bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img181/4957063/1000006420.jpg',
                            caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
@@ -98,8 +98,8 @@ def check_handler(message):
 🔍 Искали в базе: {iskalivbase}
 🐝 Stand base
             """)
-        elif rank == 'Скамер петух':
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13gb7Sxcm1sS6eoq1e6RLD5gFHM8r_JWI/view?usp=drivesdk',
+        elif rank == 'Скаммер':
+            bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img2/4957062/1000006417.jpg',
                            caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
@@ -112,21 +112,48 @@ def check_handler(message):
             chance_of_scam = 0
             if rank == 'Волонтёр':
                 chance_of_scam = 10
-            elif rank == 'Нету в базе':
-                chance_of_scam = 38
-            elif rank == 'Стажёр':
-                chance_of_scam = 20
-            elif rank == 'Проверен гарантом':
-                chance_of_scam = 23
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13IHoB08r3irZdN3n-kG9jS4eg2Lu4WdU/view?usp=drivesdk',
-                           caption=f"""
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img274/4957067/1000006523.jpg',
+                               caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
 🚮 Слито скамеров: {slitoscammerov}
 🔍 Искали в базе: {iskalivbase}
 🐝 Stand base
-            """)
+                """)
+            elif rank == 'Нету в базе':
+                chance_of_scam = 38
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img53/4957058/1000006423.jpg',
+                               caption=f"""
+🆔 Id: {user_id}
+🔁 Репутация: {rank}
+Шанс скама: {chance_of_scam}%
+🚮 Слито скамеров: {slitoscammerov}
+🔍 Искали в базе: {iskalivbase}
+🐝 Stand base
+                """)
+            elif rank == 'Стажёр':
+                chance_of_scam = 20
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img263/4957066/1000006522.jpg',
+                               caption=f"""
+🆔 Id: {user_id}
+🔁 Репутация: {rank}
+Шанс скама: {chance_of_scam}%
+🚮 Слито скамеров: {slitoscammerov}
+🔍 Искали в базе: {iskalivbase}
+🐝 Stand base
+                """)
+            elif rank == 'Проверен гарантом':
+                chance_of_scam = 23
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img233/4957059/1000006425.jpg',
+                               caption=f"""
+🆔 Id: {user_id}
+🔁 Репутация: {rank}
+Шанс скама: {chance_of_scam}%
+🚮 Слито скамеров: {slitoscammerov}
+🔍 Искали в базе: {iskalivbase}
+🐝 Stand base
+                """)
     else:
         bot.reply_to(message, "Пользователь не найден в базе.")
 
@@ -140,7 +167,7 @@ def check_me_handler(message):
         user_id, rank, mute_until, ban_until, slitoscammerov, iskalivbase, zaiavki = user_data
         
         if rank in ['Админ', 'Владелец', 'Директор']:
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+            bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957060/1000006422.jpg',
                            caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
@@ -150,7 +177,7 @@ def check_me_handler(message):
 🐝 Stand base
             """)
         elif rank == 'Гарант':
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13S8glENhOfGxvctIKXV2sLzJmdwQdKPZ/view?usp=drivesdk',
+            bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img58/4957061/1000006419.jpg',
                            caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
@@ -163,21 +190,48 @@ def check_me_handler(message):
             chance_of_scam = 0
             if rank == 'Волонтёр':
                 chance_of_scam = 10
-            elif rank == 'Нету в базе':
-                chance_of_scam = 38
-            elif rank == 'Стажёр':
-                chance_of_scam = 20
-            elif rank == 'Проверен гарантом':
-                chance_of_scam = 23
-            bot.send_photo(chat_id=message.chat.id, photo='https://drive.google.com/file/d/13IHoB08r3irZdN3n-kG9jS4eg2Lu4WdU/view?usp=drivesdk',
-                           caption=f"""
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img274/4957067/1000006523.jpg',
+                               caption=f"""
 🆔 Id: {user_id}
 🔁 Репутация: {rank}
 Шанс скама: {chance_of_scam}%
 🚮 Слито скамеров: {slitoscammerov}
 🔍 Искали в базе: {iskalivbase}
 🐝 Stand base
-            """)
+                """)
+            elif rank == 'Нету в базе':
+                chance_of_scam = 38
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img53/4957058/1000006423.jpg',
+                               caption=f"""
+🆔 Id: {user_id}
+🔁 Репутация: {rank}
+Шанс скама: {chance_of_scam}%
+🚮 Слито скамеров: {slitoscammerov}
+🔍 Искали в базе: {iskalivbase}
+🐝 Stand base
+                """)
+            elif rank == 'Стажёр':
+                chance_of_scam = 20
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img263/4957066/1000006522.jpg',
+                               caption=f"""
+🆔 Id: {user_id}
+🔁 Репутация: {rank}
+Шанс скама: {chance_of_scam}%
+🚮 Слито скамеров: {slitoscammerov}
+🔍 Искали в базе: {iskalivbase}
+🐝 Stand base
+                """)
+            elif rank == 'Проверен гарантом':
+                chance_of_scam = 23
+                bot.send_photo(chat_id=message.chat.id, photo='https://imageup.ru/img233/4957059/1000006425.jpg',
+                               caption=f"""
+🆔 Id: {user_id}
+🔁 Репутация: {rank}
+Шанс скама: {chance_of_scam}%
+🚮 Слито скамеров: {slitoscammerov}
+🔍 Искали в базе: {iskalivbase}
+🐝 Stand base
+                """)
     else:
         bot.reply_to(message, "Вы не найдены в базе.")
 
